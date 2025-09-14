@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.NOCTS">
+
+        <!-- Launcher activity -->
+        <activity
+            android:name=".LoginSignupPage"
+            android:exported="true"
+            android:label="@string/title_activity_login_signup_page"
+            android:theme="@style/Theme.NOCTS">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Other app activities -->
+        <activity android:name=".LoginActivity" android:exported="true" android:label="@string/title_activity_login" />
+        <activity android:name=".LoginActivity2" android:exported="false" android:label="@string/title_activity_login2" />
+        <activity android:name=".SignupActivity" android:exported="false" android:label="@string/title_activity_signup" />
+        <activity android:name=".SignupActivity2" android:exported="false" android:label="@string/title_activity_signup2" />
+        <activity android:name=".FirstTimeLoginActivity" android:exported="false" android:label="@string/title_activity_first_time_login" />
+        <activity android:name=".ForgotPasswordActivity" android:exported="false" android:label="@string/title_activity_password_recovery" />
+        <activity android:name=".DeclaringPayslipActivity" android:exported="false" android:label="@string/title_activity_declaring_payslip" />
+        <activity android:name=".ResubmitPayslipActivity" android:exported="false" android:label="@string/title_activity_resubmit_payslip" />
+        <activity android:name=".CheckingEligibilityActivity" android:exported="false" android:label="@string/title_activity_checking_eligibility" />
+        <activity android:name=".SubsidyEligibilityStatusActivity" android:exported="false" android:label="@string/title_activity_subsidy_eligibility_status" />
+        <activity android:name=".MainActivity" android:exported="false" />
+
+    </application>
+</manifest>

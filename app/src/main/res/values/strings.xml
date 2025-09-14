@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">NOCTS</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="title_activity_login_signup_page">LoginSignupPage</string>
+    <string name="title_activity_signup">SignupActivity</string>
+    <string name="title_activity_signup2">SignupActivity2</string>
+    <string name="title_activity_first_time_login">FirstTimeLoginActivity</string>
+    <string name="title_activity_declare_payslip">DeclarePayslipActivity</string>
+    <string name="title_activity_eligibility_status">EligibilityStatusActivity</string>
+    <string name="title_activity_purchase_fuel">PurchaseFuelActivity</string>
+    <string name="title_activity_password_recovery">PasswordRecoveryActivity</string>
+    <string name="title_activity_login2">LoginActivity2</string>
+    <string name="title_activity_declaring_payslip">DeclaringPayslipActivity</string>
+    <string name="title_activity_resubmit_payslip">ResubmitPayslipActivity</string>
+    <string name="title_activity_checking_eligibility">CheckingEligibilityActivity</string>
+    <string name="title_activity_subsidy_eligibility_status">SubsidyEligibilityStatusActivity
+    </string>
+</resources>
