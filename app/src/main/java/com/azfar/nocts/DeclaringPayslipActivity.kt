@@ -135,9 +135,11 @@ fun DeclaringPayslipScreen(modifier: Modifier = Modifier) {
                 // Continue button (disabled until payslip submitted)
                 Button(
                     onClick = {
-                        context.startActivity(Intent(context, ResubmitPayslipActivity::class.java))
+                        context.startActivity(Intent(context, CheckingEligibilityActivity ::class.java))
+
                     },
                     enabled = selectedFile != null, // disable if not submitted
+                    
                     colors = ButtonDefaults.buttonColors(
                         containerColor = customYellow,
                         contentColor = Color.Black,
