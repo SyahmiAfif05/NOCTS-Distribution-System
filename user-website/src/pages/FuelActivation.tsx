@@ -211,6 +211,17 @@ const FuelActivation = () => {
                 <p className="text-2xl font-bold text-foreground">
                   Pump {selectedPump} • RM {parseFloat(fuelAmount).toFixed(2)}
                 </p>
+                {eligibility === "eligible" && (
+                  <div className="mt-3 pt-3 border-t border-accent/30">
+                    <p className="text-sm text-muted-foreground">Subsidy Benefit</p>
+                    <p className="text-xl font-semibold text-success">
+                      +{((parseFloat(fuelAmount) / 1.75) - (parseFloat(fuelAmount) / 2.05)).toFixed(2)} Liters
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      (Getting {(parseFloat(fuelAmount) / 1.75).toFixed(2)}L instead of {(parseFloat(fuelAmount) / 2.05).toFixed(2)}L)
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
