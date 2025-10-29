@@ -1,17 +1,20 @@
 package com.azfar.nocts
 
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,7 +30,14 @@ class GenerateBarcodeActivity : ComponentActivity() {
             NOCTSTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     GenerateBarcodeScreen(
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
+                        onLogout = {
+                            // Navigate to LoginActivity and clear stack
+                            val intent = android.content.Intent(this, LoginActivity::class.java)
+                            intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
+                            finish()
+                        }
                     )
                 }
             }
@@ -36,11 +46,45 @@ class GenerateBarcodeActivity : ComponentActivity() {
 }
 
 @Composable
-fun GenerateBarcodeScreen(modifier: Modifier = Modifier) {
+fun GenerateBarcodeScreen(
+    modifier: Modifier = Modifier,
+    onLogout: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    // Handle back press to show confirmation dialog
+    BackHandler {
+        showExitDialog = true
+    }
+
+    // Exit confirmation dialog
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = { Text("Exit App") },
+            text = { Text("Are you sure you want to exit the app?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showExitDialog = false
+                    activity?.finishAffinity() // exits app completely
+                }) {
+                    Text("Yes", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitDialog = false }) {
+                    Text("No")
+                }
+            }
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFECECEC)) // light gray
+            .background(Color(0xFFECECEC))
     ) {
         Column(
             modifier = Modifier
@@ -49,19 +93,13 @@ fun GenerateBarcodeScreen(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(0.dp))
-
             // Logo
+            Spacer(modifier = Modifier.height(0.dp))
             Image(
-                painter = painterResource(id = R.drawable.onlylogo), // replace with your logo
+                painter = painterResource(id = R.drawable.onlylogo),
                 contentDescription = "Logo",
-                modifier = Modifier
-                    .size(300.dp)
+                modifier = Modifier.size(300.dp)
             )
-
-            Spacer(modifier = Modifier.height(1.dp))
-
-            // Station name
 
             Spacer(modifier = Modifier.height(1.dp))
 
@@ -77,33 +115,32 @@ fun GenerateBarcodeScreen(modifier: Modifier = Modifier) {
 
             // Barcode image
             Image(
-                painter = painterResource(id = R.drawable.barcode), // place barcode PNG in drawable
+                painter = painterResource(id = R.drawable.barcode),
                 contentDescription = "Barcode",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(60.dp))
 
-
-        }
-
-        // Back button at bottom
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp)
-                .align(Alignment.BottomCenter),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-
-
+            // Logout button
+            Button(
+                onClick = { onLogout() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(50.dp)
+            ) {
+                Text(
+                    text = "Logout",
+                    color = Color.White,
+                    fontSize = 18.sp
+                )
             }
         }
     }
-
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -112,3 +149,4 @@ fun GenerateBarcodePreview() {
         GenerateBarcodeScreen()
     }
 }
+
