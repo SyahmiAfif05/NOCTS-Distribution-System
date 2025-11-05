@@ -1,70 +1,84 @@
-// Mock authentication service
-interface User {
-  id: string;
+// src/services/authService.ts
+export type Role = "admin" | "staff";
+
+export interface Session {
+  token: string;
+  role: Role;
   name: string;
   staffId: string;
-  role: string;
 }
 
-interface LoginResult {
-  success: boolean;
-  user?: User;
-  message?: string;
-}
+const STORAGE_KEY = "nocts_session";
 
-class AuthService {
-  private currentUser: User | null = null;
+// ✅ Mock user database (adjust these to your real accounts later)
+const mockUsers = [
+  {
+    staffId: "ADMIN001",
+    password: "admin123",
+    name: "John Doe",
+    role: "admin" as Role,
+  },
+  {
+    staffId: "STAFF001",
+    password: "staff123",
+    name: "Ahmad Fuel Guy",
+    role: "staff" as Role,
+  }
+];
 
-  async login(staffId: string, password: string): Promise<LoginResult> {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+export const authService = {
 
-    // Mock validation - in real app, this would call backend API
-    if (staffId === "STAFF001" && password === "admin123") {
-      const user: User = {
-        id: "1",
-        name: "John Doe",
-        staffId: "STAFF001",
-        role: "Admin"
-      };
-      
-      this.currentUser = user;
-      localStorage.setItem("nocts_user", JSON.stringify(user));
-      
-      return {
-        success: true,
-        user
-      };
+  // ✅ mock login function
+  async login(staffId: string, password: string) {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // simulate delay
+
+    const user = mockUsers.find(
+      (u) => u.staffId === staffId && u.password === password
+    );
+
+    if (!user) {
+      return { success: false, message: "Invalid Staff ID or Password" };
     }
+
+    const session: Session = {
+      token: `token_${user.staffId}_${Date.now()}`,
+      role: user.role,
+      name: user.name,
+      staffId: user.staffId,
+    };
+
+    authService.loginLocal(session);
 
     return {
-      success: false,
-      message: "Invalid credentials"
+      success: true,
+      user: session,
     };
-  }
+  },
 
-  logout(): void {
-    this.currentUser = null;
-    localStorage.removeItem("nocts_user");
-  }
+  loginLocal(session: Session) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  },
 
-  getCurrentUser(): User | null {
-    if (this.currentUser) {
-      return this.currentUser;
-    }
+  logout() {
+    localStorage.removeItem(STORAGE_KEY);
+  },
 
-    const stored = localStorage.getItem("nocts_user");
-    if (stored) {
-      this.currentUser = JSON.parse(stored);
-      return this.currentUser;
-    }
+  getSession(): Session | null {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Session) : null;
+  },
 
-    return null;
-  }
+  getToken(): string | null {
+    const s = authService.getSession();
+    return s?.token ?? null;
+  },
 
-  isAuthenticated(): boolean {
-    return this.getCurrentUser() !== null;
-  }
-}
+  getRole(): Role | null {
+    const s = authService.getSession();
+    return s?.role ?? null;
+  },
 
-export const authService = new AuthService();
+  isLoggedIn(): boolean {
+    return !!authService.getToken();
+  },
+};

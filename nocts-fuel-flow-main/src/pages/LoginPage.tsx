@@ -13,45 +13,71 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!staffId || !password) {
-      toast({
-        title: "Error",
-        description: "Please enter both Staff ID and Password",
-        variant: "destructive",
-      });
-      return;
-    }
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    setIsLoading(true);
-    
-    try {
-      const result = await authService.login(staffId, password);
-      if (result.success) {
-        toast({
-          title: "Login Successful",
-          description: `Welcome, ${result.user?.name}`,
-        });
-        navigate("/navigation");
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid credentials",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+  if (!staffId || !password) {
+    toast({
+      title: "Error",
+      description: "Please enter both Staff ID and Password",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    // Call your existing authService.login (mock API you had previously).
+    // If your authService.login is different, adapt this call accordingly.
+    const result = await authService.login(staffId, password);
+
+    if (result.success && result.user) {
+      // Create a simple token (mock). In real app, backend would return a token.
+      const fakeToken = `nocts_${result.user.staffId}_${Date.now()}`;
+
+      // normalize role to lowercase 'admin' | 'staff'
+      const rawRole = String(result.user.role || "").toLowerCase();
+      const role: "admin" | "staff" = rawRole === "admin" ? "admin" : "staff";
+
+      // Save into the new authService session store
+      // If you replaced authService implementation per STEP 1, use loginLocal:
+      (authService as any).loginLocal({
+        token: fakeToken,
+        role,
+        name: result.user.name,
+        staffId: result.user.staffId,
+      });
+
       toast({
-        title: "Error",
-        description: "Connection failed. Please try again.",
+        title: "Login Successful",
+        description: `Welcome, ${result.user.name}`,
+      });
+
+      // Redirect based on role
+      if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/staff", { replace: true });
+      }
+    } else {
+      toast({
+        title: "Login Failed",
+        description: result.message || "Invalid credentials",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (err) {
+    toast({
+      title: "Error",
+      description: "Connection failed. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div 
@@ -74,7 +100,7 @@ const LoginPage = () => {
 </div>
 
           <CardTitle className="text-3xl font-bold text-foreground !-mt-4">
-            NOCTS Admin
+            NOCTS 
           </CardTitle>
           <p className="text-muted-foreground mt-2">
             Staff Authentication Portal

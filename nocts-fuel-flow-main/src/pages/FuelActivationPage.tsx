@@ -7,6 +7,8 @@ import { LogOut, ArrowLeft } from "lucide-react";
 import Keypad from "@/components/Keypad";
 import PumpSelector from "@/components/PumpSelector";
 import BarcodeInput from "@/components/BarcodeInput";
+import FuelSummaryPopup from "@/components/FuelSummaryPopup";
+
 import { fuelService } from "@/services/fuelService";
 import { authService } from "@/services/authService";
 import { transactionService } from "@/services/transactionService";
@@ -16,6 +18,10 @@ const FuelActivationPage = () => {
   const [selectedPump, setSelectedPump] = useState<number | null>(null);
   const [barcode, setBarcode] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [showSummary, setShowSummary] = useState(false);
+  const [summary, setSummary] = useState({ amount: 0, fuelLiters: 0, subsidyLiters: 0 });
+
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -24,19 +30,9 @@ const FuelActivationPage = () => {
   };
 
   const handleBack = () => {
-    navigate("/navigation");
-  };
-
-  const handleAmountChange = (value: string) => {
-    setAmount(value);
-  };
-
-  const handlePumpSelect = (pumpNumber: number) => {
-    setSelectedPump(pumpNumber);
-  };
-
-  const handleBarcodeChange = (value: string) => {
-    setBarcode(value);
+    const role = authService.getRole();
+    if (role === "admin") navigate("/admin");
+    else navigate("/staff");
   };
 
   const handleContinue = async () => {
@@ -62,33 +58,34 @@ const FuelActivationPage = () => {
       });
 
       if (result.success) {
-      const fuelLiters = result.fuelLiters ?? 0;
-      const subsidyLiters = result.subsidyLiters ?? 0;
+        const fuelLiters = result.fuelLiters ?? 0;
+        const subsidyLiters = result.subsidyLiters ?? 0;
 
-      // Determine discountApplied from the activation result, NOT just presence of barcode.
-      // Use a tiny epsilon in case of floating rounding errors.
-      const discountApplied = (subsidyLiters > 0.0001) || ((result.discountPercent ?? 0) > 0);
+        const discountApplied = (subsidyLiters > 0.0001) || ((result.discountPercent ?? 0) > 0);
 
-      // Persist transaction (subsidy in liters)
-      transactionService.addTransaction({
-        transactionId: result.transactionId,
-        pumpNumber: selectedPump,
-        amount: numericAmount,
-        barcode,
-        discountApplied,
-        fuelLiters,
-        subsidyLiters,
-        subsidyType: result.subsidyType,
-        discountPercent: result.discountPercent,
-        pricePerLiter: result.pricePerLiter,
-      });
+        transactionService.addTransaction({
+          transactionId: result.transactionId,
+          pumpNumber: selectedPump,
+          amount: numericAmount,
+          barcode,
+          discountApplied,
+          fuelLiters,
+          subsidyLiters,
+          subsidyType: result.subsidyType,
+          discountPercent: result.discountPercent,
+          pricePerLiter: result.pricePerLiter,
+        });
 
-  toast({
-    title: "Pump Activated",
-    description: `Pump ${selectedPump} activated — Dispensed ${fuelLiters.toFixed(2)} ℓ (Subsidy: ${subsidyLiters > 0 ? subsidyLiters.toFixed(2) + " ℓ" : "0.00 ℓ"})`,
-  });
+        // ✅ Show floating summary popup
+        setSummary({
+          amount: numericAmount,
+          fuelLiters,
+          subsidyLiters,
+        });
+        setShowSummary(true);
+        setTimeout(() => setShowSummary(false), 6000); // hides after 6s
 
-        // Reset form
+        // Reset UI
         setAmount("");
         setSelectedPump(null);
         setBarcode("");
@@ -99,7 +96,7 @@ const FuelActivationPage = () => {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "System error. Please contact support.",
@@ -123,7 +120,7 @@ const FuelActivationPage = () => {
               <span className="text-lg font-bold text-primary-foreground">N</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">NOCTS Admin</h1>
+              <h1 className="text-xl font-bold text-foreground">NOCTS</h1>
               <p className="text-sm text-muted-foreground">Fuel Pump Control</p>
             </div>
           </div>
@@ -134,92 +131,71 @@ const FuelActivationPage = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="p-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column - Amount Entry */}
+            {/* Amount + Barcode */}
             <div className="space-y-6">
               <Card className="bg-surface-elevated border-border">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Fuel Amount (RM)</CardTitle>
+                  <CardTitle>Fuel Amount (RM)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center mb-6">
-                    <div className="text-4xl font-bold text-primary mb-2">
-                      RM {amount || "0.00"}
-                    </div>
+                    <div className="text-4xl font-bold">RM {amount || "0.00"}</div>
                     <p className="text-muted-foreground">Enter amount to dispense</p>
                   </div>
-                  <Keypad onValueChange={handleAmountChange} />
+                  <Keypad onValueChange={setAmount} />
                 </CardContent>
               </Card>
 
-              {/* Barcode Scanner */}
               <Card className="bg-surface-elevated border-border">
                 <CardHeader>
-                  <CardTitle className="text-foreground">User Barcode</CardTitle>
+                  <CardTitle>User Barcode</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BarcodeInput value={barcode} onChange={handleBarcodeChange} />
+                  <BarcodeInput value={barcode} onChange={setBarcode} />
                 </CardContent>
               </Card>
             </div>
 
-            {/* Right Column - Pump Selection */}
+            {/* Pump + Continue */}
             <div className="space-y-6">
               <Card className="bg-surface-elevated border-border">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Select Fuel Pump</CardTitle>
+                  <CardTitle>Select Fuel Pump</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <PumpSelector
-                    selectedPump={selectedPump}
-                    onPumpSelect={handlePumpSelect}
-                  />
+                  <PumpSelector selectedPump={selectedPump} onPumpSelect={setSelectedPump} />
                 </CardContent>
               </Card>
 
-              {/* Continue Button */}
               <Card className="bg-surface-elevated border-border">
                 <CardContent className="pt-6">
-                  <div className="text-center space-y-4">
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        Amount:{" "}
-                        <span className="text-primary font-medium">
-                          RM {amount || "0.00"}
-                        </span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Pump:{" "}
-                        <span className="text-primary font-medium">
-                          {selectedPump ? `#${selectedPump}` : "Not selected"}
-                        </span>
-                      </p>
-                      {barcode && (
-                        <p className="text-sm text-muted-foreground">
-                          Barcode:{" "}
-                          <span className="text-success font-medium">Scanned</span>
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      variant="kiosk"
-                      size="kiosk"
-                      className="w-full"
-                      onClick={handleContinue}
-                      disabled={isProcessing || !amount || !selectedPump}
-                    >
-                      {isProcessing ? "Processing..." : "Continue"}
-                    </Button>
-                  </div>
+                  <Button
+                    variant="kiosk"
+                    size="kiosk"
+                    className="w-full"
+                    onClick={handleContinue}
+                    disabled={isProcessing || !amount || !selectedPump}
+                  >
+                    {isProcessing ? "Processing..." : "Continue"}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
       </main>
+
+      {/* ✅ Floating Summary Popup */}
+      <FuelSummaryPopup
+        visible={showSummary}
+        amount={summary.amount}
+        fuelLiters={summary.fuelLiters}
+        subsidyLiters={summary.subsidyLiters}
+         onClose={() => setShowSummary(false)}
+      />
     </div>
   );
 };

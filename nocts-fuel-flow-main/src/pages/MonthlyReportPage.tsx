@@ -56,7 +56,12 @@ const MonthlyReportPage = () => {
   };
 
   const handleBack = () => {
-    navigate("/navigation");
+    const role = authService.getRole();
+    if (role === "admin") {
+      navigate("/admin");  // Admin navigation page
+    } else {
+      navigate("/staff");  // Staff navigation page
+    }
   };
 
   useEffect(() => {
@@ -117,7 +122,8 @@ const MonthlyReportPage = () => {
               <span className="text-2xl font-bold text-primary-foreground">N</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">NOCTS Admin Page</h1>
+              <h1 className="text-2xl font-bold text-foreground">NOCTS</h1>
+              <p className="text-sm text-muted-foreground">Monthly Report</p>
             </div>
           </div>
           <Button variant="destructive" size="lg" onClick={handleLogout}>
